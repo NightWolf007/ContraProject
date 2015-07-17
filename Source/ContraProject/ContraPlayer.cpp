@@ -146,8 +146,6 @@ void AContraPlayer::Aim(float AxisValue)
 
 void AContraPlayer::Jump()
 {
-	UE_LOG(LogClass, Log, TEXT("NYAN"));
-	// state = EPlayerStates::PS_MIDAIR;
 	is_jumping = true;
 	Super::Jump();
 }
