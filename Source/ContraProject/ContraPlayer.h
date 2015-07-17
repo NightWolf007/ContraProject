@@ -11,7 +11,9 @@ enum class EPlayerStates : uint8
 	PS_USUAL UMETA(DisplayName="Usual"),
 	PS_MIDAIR UMETA(DisplayName="MidAir"),
 	PS_DEFEATED UMETA(DisplayName="Defeated"),
-	PS_LYING UMETA(DisplayName="Lying")
+	PS_LYING UMETA(DisplayName="Lying"),
+	PS_AIMING_UP UMETA(DisplayName="AimingUp"),
+	PS_AIMING_DOWN UMETA(DisplayName="AimingUp")
 };
 
 UCLASS()
@@ -32,7 +34,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	void Move(float AxisValue);
-	void AimUp(float AxisValue);
+	void AimRunUp();
+	void AimRunDown();
+	void Run();
 	void Jump() override;
 
 protected:
