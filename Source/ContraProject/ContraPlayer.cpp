@@ -86,10 +86,12 @@ void AContraPlayer::UpdateAnimation()
 {
 	FVector velocity = GetVelocity();
 
-	if (EPlayerStates::PS_MIDAIR == state && velocity.Z != 0) {
+	if (is_jumping && velocity.Z != 0) {
 		GetSprite()->SetFlipbook(JumpAnimation);
 		return;
 	}
+	if (is_jumping)
+		is_jumping = false;
 
 	if (velocity.X != 0) {
 		if (EPlayerStates::PS_AIMING_UP == state)
@@ -116,12 +118,9 @@ void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompon
 
 	InputComponent->BindAction("Jump", IE_Pressed, this, &AContraPlayer::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	InputComponent->BindAction("AimUp", IE_Pressed, this, &AContraPlayer::AimRunUp);
-	InputComponent->BindAction("AimUp", IE_Released, this, &AContraPlayer::Run);
-	InputComponent->BindAction("AimDown", IE_Pressed, this, &AContraPlayer::AimRunDown);
-	InputComponent->BindAction("AimDown", IE_Released, this, &AContraPlayer::Run);
 
 	InputComponent->BindAxis("Move", this, &AContraPlayer::Move);
+	InputComponent->BindAxis("Aim", this, &AContraPlayer::Aim);
 }
 
 // Input events handlers
@@ -135,24 +134,20 @@ void AContraPlayer::Move(float AxisValue)
 			GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
 }
 
-void AContraPlayer::AimRunUp()
+void AContraPlayer::Aim(float AxisValue)
 {
-	state = EPlayerStates::PS_AIMING_UP;
-}
-
-void AContraPlayer::AimRunDown()
-{
-	state = EPlayerStates::PS_AIMING_DOWN;
-}
-
-void AContraPlayer::Run()
-{
-	state = EPlayerStates::PS_USUAL;
+	if (AxisValue == 0)
+		state = EPlayerStates::PS_USUAL;
+	else if (AxisValue > 0)
+		state = EPlayerStates::PS_AIMING_UP;
+	else
+		state = EPlayerStates::PS_AIMING_DOWN;
 }
 
 void AContraPlayer::Jump()
 {
 	UE_LOG(LogClass, Log, TEXT("NYAN"));
-	state = EPlayerStates::PS_MIDAIR;
+	// state = EPlayerStates::PS_MIDAIR;
+	is_jumping = true;
 	Super::Jump();
 }

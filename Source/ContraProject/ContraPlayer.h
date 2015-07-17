@@ -9,7 +9,7 @@ UENUM(BlueprintType)
 enum class EPlayerStates : uint8
 {
 	PS_USUAL UMETA(DisplayName="Usual"),
-	PS_MIDAIR UMETA(DisplayName="MidAir"),
+	// PS_MIDAIR UMETA(DisplayName="MidAir"),
 	PS_DEFEATED UMETA(DisplayName="Defeated"),
 	PS_LYING UMETA(DisplayName="Lying"),
 	PS_AIMING_UP UMETA(DisplayName="AimingUp"),
@@ -34,11 +34,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	void Move(float AxisValue);
-	void AimRunUp();
-	void AimRunDown();
-	void Run();
+	void Aim(float AxisValue);
 	void Jump() override;
-
+	
 protected:
 	UPROPERTY(EditAnywhere)
 		class UCameraComponent* camera;
@@ -60,4 +58,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category=State)
 		EPlayerStates state;
+
+	bool is_jumping = false;
 };
