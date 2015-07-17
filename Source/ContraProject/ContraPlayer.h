@@ -5,6 +5,15 @@
 #include "PaperCharacter.h"
 #include "ContraPlayer.generated.h"
 
+UENUM(BlueprintType)
+enum class EPlayerStates : uint8
+{
+	PS_USUAL UMETA(DisplayName="Usual"),
+	PS_MIDAIR UMETA(DisplayName="MidAir"),
+	PS_DEFEATED UMETA(DisplayName="Defeated"),
+	PS_LYING UMETA(DisplayName="Lying")
+};
+
 UCLASS()
 class CONTRAPROJECT_API AContraPlayer : public APaperCharacter
 {
@@ -23,6 +32,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	void Move(float AxisValue);
+	void AimUp(float AxisValue);
+	void Jump() override;
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -42,4 +53,7 @@ protected:
 		class UPaperFlipbook* JumpAnimation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
 		class UPaperFlipbook* DefeatAnimation;
+
+	UPROPERTY(BlueprintReadOnly, Category=State)
+		EPlayerStates state;
 };

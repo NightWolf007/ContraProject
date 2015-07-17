@@ -38,8 +38,9 @@ AContraPlayer::AContraPlayer()
 	JumpAnimation = ConstructorStatics.JumpAnimationAsset.Get();
 	DefeatAnimation = ConstructorStatics.DefeatAnimationAsset.Get();
 
+	state = EPlayerStates::PS_USUAL;
 	GetSprite()->SetFlipbook(IdleAnimation);
-	GetSprite()->SetRelativeTransform(FTransform(FQuat(0, 0, 0, 0), FVector(0, 0, 0), FVector(4.5, 1, 4.5)));
+	GetSprite()->SetRelativeScale3D(FVector(4.5, 1, 4.5));
 
 
 	// Use only Yaw from the controller and ignore the rest of the rotation.
@@ -55,8 +56,6 @@ AContraPlayer::AContraPlayer()
 
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	// PrimaryActorTick.bCanEverTick = true;
-
-	// AutoPossessPlayer = EAutoReceiveInput::Player0;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
 
@@ -87,6 +86,11 @@ void AContraPlayer::UpdateAnimation()
 {
 	FVector velocity = GetVelocity();
 
+	if (EPlayerStates::PS_MIDAIR == state && velocity.Z != 0) {
+		GetSprite()->SetFlipbook(JumpAnimation);
+		return;
+	}
+
 	if (velocity.X != 0)
 		GetSprite()->SetFlipbook(RunningAnimation);
 	else
@@ -104,17 +108,30 @@ void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompon
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 
-	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	InputComponent->BindAction("Jump", IE_Pressed, this, &AContraPlayer::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	InputComponent->BindAxis("Move", this, &AContraPlayer::Move);
+	InputComponent->BindAxis("AimUp", this, &AContraPlayer::AimUp);
 }
 
 void AContraPlayer::Move(float AxisValue)
 {
 	AddMovementInput(FVector(1, 0, 0), AxisValue);
-	if(AxisValue > 0)
-		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
-	else if(AxisValue < 0)
-		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
+	if(AxisValue != 0)
+		if(AxisValue > 0)
+			GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
+		else
+			GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
+}
+
+void AContraPlayer::AimUp(float AxisValue)
+{
+
+}
+
+void AContraPlayer::Jump()
+{
+	state = EPlayerStates::PS_MIDAIR;
+	Super::Jump();
 }
