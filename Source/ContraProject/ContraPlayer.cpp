@@ -39,6 +39,8 @@ AContraPlayer::AContraPlayer()
 	DefeatAnimation = ConstructorStatics.DefeatAnimationAsset.Get();
 
 	GetSprite()->SetFlipbook(IdleAnimation);
+	GetSprite()->SetRelativeTransform(FTransform(FQuat(0, 0, 0, 0), FVector(0, 0, 0), FVector(4.5, 1, 4.5)));
+
 
 	// Use only Yaw from the controller and ignore the rest of the rotation.
 	bUseControllerRotationPitch = false;
@@ -46,8 +48,9 @@ AContraPlayer::AContraPlayer()
 	bUseControllerRotationRoll = false;
 
 	// Set the size of our collision capsule.
-	GetCapsuleComponent()->SetCapsuleHalfHeight(96);
-	GetCapsuleComponent()->SetCapsuleRadius(40);
+	GetCapsuleComponent()->SetCapsuleHalfHeight(90);
+	GetCapsuleComponent()->SetCapsuleRadius(68);
+	GetCapsuleComponent()->SetRelativeLocation(FVector(-25, 0, 0));
 
 
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -59,8 +62,8 @@ AContraPlayer::AContraPlayer()
 
 	camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	camera->AttachTo(RootComponent);
-	camera->SetRelativeLocation(FVector(0, -200, 0));
-	camera->SetRelativeRotation(FRotator(0, 0, 0));
+	camera->SetRelativeLocation(FVector(0, 200, 0));
+	camera->SetRelativeRotation(FRotator(0, -90, 0));
 	camera->ProjectionMode = ECameraProjectionMode::Orthographic;
 	camera->OrthoWidth = 2048;
 
@@ -74,7 +77,7 @@ AContraPlayer::AContraPlayer()
 
 	// Lock character motion onto the XZ plane, so the character can't move in or out of the screen
 	GetCharacterMovement()->bConstrainToPlane = true;
-	GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.0f, -1.0f, 0.0f));
+	GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0, -1, 0));
 
 	GetCharacterMovement()->bUseFlatBaseForFloorChecks = true;
 }
@@ -82,10 +85,18 @@ AContraPlayer::AContraPlayer()
 // Called every frame
 void AContraPlayer::UpdateAnimation()
 {
-	if (GetVelocity().Size() > 0)
+	FVector velocity = GetVelocity();
+
+	if (velocity.X != 0)
 		GetSprite()->SetFlipbook(RunningAnimation);
 	else
 		GetSprite()->SetFlipbook(IdleAnimation);
+}
+
+void AContraPlayer::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdateAnimation();
 }
 
 // Called to bind functionality to input
@@ -102,4 +113,8 @@ void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompon
 void AContraPlayer::Move(float AxisValue)
 {
 	AddMovementInput(FVector(1, 0, 0), AxisValue);
+	if(AxisValue > 0)
+		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
+	else if(AxisValue < 0)
+		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
 }
