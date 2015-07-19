@@ -16,19 +16,21 @@ enum class EPlayerStates : uint8
 	PS_RUN_AIM_DOWN UMETA(DisplayName="AimDown"),
 
 	PS_JUMP UMETA(DisplayName="Jump"),
-	PS_LIE UMETA(DisplayName="Lying"),
 	PS_DEFEAT UMETA(DisplayName = "Defeated"),
 	PS_DUCK UMETA(DisplayName = "Duck")
 };
 
 UENUM(BlueprintType)
-enum class EPlayerKeys : uint8
+enum class EPlayerActions : uint8
 {
-	KEY_LEFT UMETA(DisplayName = "Left"),
-	KEY_RIGHT UMETA(DisplayName = "Right"),
-	KEY_DOWN UMETA(DisplayName = "Down"),
-	KEY_UP UMETA(DisplayName = "Up"),
-	KEY_JUMP UMETA(DisplayName = "Jump")
+	PA_MOVE_LEFT UMETA(DisplayName = "Move left"),
+	PA_MOVE_RIGHT UMETA(DisplayName = "Move right"),
+	PA_MOVE_REL UMETA(DisplayName = "Move released"),
+	PA_AIM_UP UMETA(DisplayName = "Aim Up"),
+	PA_AIM_DOWN UMETA(DisplayName = "Aim down"),
+	PA_AIM_REL UMETA(DisplayName = "Aim released"),
+	PA_JUMP UMETA(DisplayName = "Jump"),
+	PA_JUMP_REL UMETA(DisplayName = "Jump released")
 };
 
 UCLASS()
@@ -49,7 +51,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	void ChangeState(EPlayerStates nstate);
-	void RequestState(EPlayerStates nstate);
+	void RequestState(EPlayerActions action);
 
 	void Move(float AxisValue);
 	void Aim(float AxisValue);
