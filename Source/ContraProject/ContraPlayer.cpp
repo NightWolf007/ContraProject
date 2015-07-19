@@ -87,10 +87,12 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 {
 	UPaperFlipbook* flipbook = nullptr;
 
+	int HitBoxHeight  = 90;
+	int HitBoxRadius = 68;
+
 	switch (nstate) {
 		case EPlayerStates::PS_IDLE :
 			flipbook = IdleAnimation;
-			// GetWorldTimerManager()->SetTimer(standTimerHandle, this, &AContraPlayer::Stand, 3);
 		break;
 
 		case EPlayerStates::PS_STAND :
@@ -109,7 +111,8 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 			flipbook = AimRunningDownAnimation;
 		break;
 
-		case EPlayerStates::PS_JUMP :
+		case EPlayerStates::PS_JUMP:
+			HitBoxHeight = 74;
 			flipbook = JumpAnimation;
 		break;
 
@@ -118,59 +121,48 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 		break;
 
 		case EPlayerStates::PS_DUCK :
+			HitBoxHeight = 50;
+			HitBoxRadius = 40;
 			flipbook = DuckAnimation;
 		break;
 	};
 
+	GetCapsuleComponent()->SetCapsuleHalfHeight(HitBoxHeight);
+	GetCapsuleComponent()->SetCapsuleRadius(HitBoxRadius);
 	GetSprite()->SetFlipbook(flipbook);
 	state = nstate;
 	// if (EPlayerStates::PS_IDLE != nstate)
 	// 	GetWorldTimerManager()->ClearTimer(standTimerHandle);
 }
 
-void AContraPlayer::RequestState(EPlayerActions action)
+void AContraPlayer::UpdateState()
 {
-	switch (action) {
-		case EPlayerActions::PA_MOVE_LEFT :
-		case EPlayerActions::PA_MOVE_RIGHT :
-			if (EPlayerStates::PS_JUMP != state && EPlayerStates::PS_RUN_AIM_UP != state && EPlayerStates::PS_RUN_AIM_DOWN != state)
-				ChangeState(EPlayerStates::PS_RUN);
-		break;
 
-		case EPlayerActions::PA_MOVE_REL :
-			if (EPlayerStates::PS_JUMP != state)
-				ChangeState(EPlayerStates::PS_IDLE);
-		break;
+	if (EPlayerStates::PS_DEFEAT == state) return;
 
-		case EPlayerActions::PA_AIM_UP :
-			if (EPlayerStates::PS_RUN == state)
-				ChangeState(EPlayerStates::PS_RUN_AIM_UP);
-		break;
+	if (jump) {
+		ChangeState(EPlayerStates::PS_JUMP);
+		return;
+	}
 
-		case EPlayerActions::PA_AIM_DOWN :
-			if (EPlayerStates::PS_RUN == state || EPlayerStates::PS_RUN_AIM_DOWN == state)
-				ChangeState(EPlayerStates::PS_RUN_AIM_DOWN);
-			else
-				if (EPlayerStates::PS_JUMP != state)
-					ChangeState(EPlayerStates::PS_DUCK);
-		break;
+	EPlayerStates nstate;
 
-		case EPlayerActions::PA_AIM_REL :
-			if (EPlayerStates::PS_JUMP != state)
-				if (GetVelocity().X != 0)
-					ChangeState(EPlayerStates::PS_RUN);
-				else
-					ChangeState(EPlayerStates::PS_IDLE);
-		break;
+	if (xVal != 0)
+		if (yVal > 0)
+			nstate = EPlayerStates::PS_RUN_AIM_UP;
+		else if (yVal < 0)
+			nstate = EPlayerStates::PS_RUN_AIM_DOWN;
+		else
+			nstate = EPlayerStates::PS_RUN;
+	else
+		if (yVal > 0)
+			nstate = EPlayerStates::PS_IDLE;
+		else if (yVal < 0)
+			nstate = EPlayerStates::PS_DUCK;
+		else
+			nstate = EPlayerStates::PS_IDLE;
 
-		case EPlayerActions::PA_JUMP :
-			ChangeState(EPlayerStates::PS_JUMP);
-		break;
-
-		case EPlayerActions::PA_JUMP_REL :
-			ChangeState(EPlayerStates::PS_IDLE);
-		break;
-	};
+	ChangeState(nstate);
 }
 
 void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputComponent)
@@ -187,50 +179,42 @@ void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompon
 // Input events handlers
 void AContraPlayer::Move(float AxisValue)
 {
+	xVal = AxisValue;
+	UpdateState();
+
 	AddMovementInput(FVector(1, 0, 0), AxisValue);
-	if (AxisValue == 0) {
-		RequestState(EPlayerActions::PA_MOVE_REL);
-		return;
-	}
-	if(AxisValue > 0) {
-		RequestState(EPlayerActions::PA_MOVE_RIGHT);
+	if(AxisValue > 0)
 		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
-	} else {
-		RequestState(EPlayerActions::PA_MOVE_LEFT);
+	else
 		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
-	}
 }
 
 void AContraPlayer::Aim(float AxisValue)
 {
-	if (AxisValue == 0) {
-		RequestState(EPlayerActions::PA_AIM_REL);
-		return;
-	}
-	if (AxisValue > 0)
-		RequestState(EPlayerActions::PA_AIM_UP);
-	else
-		RequestState(EPlayerActions::PA_AIM_DOWN);
+	yVal = AxisValue;
+	UpdateState();
 }
 
 void AContraPlayer::Jump()
 {
-	RequestState(EPlayerActions::PA_JUMP);
+	jump = true;
+	UpdateState();
 	Super::Jump();
 }
 
 void AContraPlayer::Landed(const FHitResult& Hit)
 {
-	RequestState(EPlayerActions::PA_JUMP_REL);
+	jump = false;
+	UpdateState();
 	Super::Landed(Hit);
 }
 
 void AContraPlayer::Kill()
 {
-	// RequestState(EPlayerStates::PS_DEFEAT);
+	ChangeState(EPlayerStates::PS_DEFEAT);
 }
 
 void AContraPlayer::Stand()
 {
-	// RequestState(EPlayerStates::PS_STAND);
+	ChangeState(EPlayerStates::PS_STAND);
 }
