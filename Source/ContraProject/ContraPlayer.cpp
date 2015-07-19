@@ -17,6 +17,7 @@ AContraPlayer::AContraPlayer()
 		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> StandAnimationAsset;
 		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> JumpAnimationAsset;
 		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> DefeatAnimationAsset;
+		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> DuckAnimationAsset;
 		FConstructorStatics()
 			: RunningAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Running.Running")),
 			AimRunningUpAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/AimRunningUp.AimRunningUp")),
@@ -24,7 +25,8 @@ AContraPlayer::AContraPlayer()
 			IdleAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Idle.Idle")),
 			StandAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Stand.Stand")),
 			JumpAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Jump.Jump")),
-			DefeatAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Defeat.Defeat"))
+			DefeatAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Defeat.Defeat")),
+			DuckAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Duck.Duck"))
 		{
 		}
 	};
@@ -37,6 +39,7 @@ AContraPlayer::AContraPlayer()
 	StandAnimation = ConstructorStatics.StandAnimationAsset.Get();
 	JumpAnimation = ConstructorStatics.JumpAnimationAsset.Get();
 	DefeatAnimation = ConstructorStatics.DefeatAnimationAsset.Get();
+	DuckAnimation = ConstructorStatics.DuckAnimationAsset.Get();
 
 	ChangeState(EPlayerStates::PS_IDLE);
 	GetSprite()->SetFlipbook(IdleAnimation);
@@ -116,6 +119,10 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 		case EPlayerStates::PS_DEFEAT :
 			flipbook = DefeatAnimation;
 		break;
+
+		case EPlayerStates::PS_DUCK:
+			flipbook = DuckAnimation;
+			break;
 	};
 
 	GetSprite()->SetFlipbook(flipbook);
@@ -126,7 +133,7 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 
 void AContraPlayer::RequestState(EPlayerStates nstate)
 {
-	if ((EPlayerStates::PS_RUN_AIM_UP == state || EPlayerStates::PS_RUN_AIM_DOWN == state) &&
+	/*if ((EPlayerStates::PS_RUN_AIM_UP == state || EPlayerStates::PS_RUN_AIM_DOWN == state) &&
 		EPlayerStates::PS_RUN == nstate)
 		return;
 
@@ -135,6 +142,13 @@ void AContraPlayer::RequestState(EPlayerStates nstate)
 
 	if ((EPlayerStates::PS_RUN_AIM_UP == nstate || EPlayerStates::PS_RUN_AIM_DOWN == nstate) &&
 		EPlayerStates::PS_IDLE == state)
+		return;
+
+	if (EPlayerStates::PS_IDLE == state && EPlayerStates::PS_RUN_AIM_DOWN == nstate)
+		nstate = EPlayerStates::PS_DUCK;*/
+
+	if ((EPlayerControls::KEY_LEFT == state || EPlayerControls::KEY_RIGHT == state) &&
+		EPlayerControls::KEY_LEFT == nstate)
 		return;
 
 	ChangeState(nstate);
@@ -155,22 +169,30 @@ void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompon
 void AContraPlayer::Move(float AxisValue)
 {
 	AddMovementInput(FVector(1, 0, 0), AxisValue);
-	if (AxisValue == 0) {
+	if (AxisValue == 0) 
+	{
 		RequestState(EPlayerStates::PS_IDLE);
 		return;
 	}
 
-	RequestState(EPlayerStates::PS_RUN);
-	if(AxisValue > 0)
+	
+	if (AxisValue > 0)
+	{
+		RequestState(EPlayerControls::KEY_RIGHT);
 		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
+	}
 	else
+	{
+		RequestState(EPlayerControls::KEY_LEFT);
 		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
+	}
+
 }
 
 void AContraPlayer::Aim(float AxisValue)
 {
 	if (AxisValue == 0) {
-		// RequestState(EPlayerStates::PS_RUN);
+		RequestState((GetVelocity().X != 0) ? EPlayerStates::PS_RUN : EPlayerStates::PS_IDLE);
 		return;
 	}
 	if (AxisValue > 0)
@@ -199,4 +221,9 @@ void AContraPlayer::Kill()
 void AContraPlayer::Stand()
 {
 	RequestState(EPlayerStates::PS_STAND);
+}
+
+void AContraPlayer::Duck()
+{
+	RequestState(EPlayerStates::PS_DUCK);
 }

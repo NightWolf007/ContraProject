@@ -17,7 +17,18 @@ enum class EPlayerStates : uint8
 
 	PS_JUMP UMETA(DisplayName="Jump"),
 	PS_LIE UMETA(DisplayName="Lying"),
-	PS_DEFEAT UMETA(DisplayName="Defeated")
+	PS_DEFEAT UMETA(DisplayName = "Defeated"),
+	PS_DUCK UMETA(DisplayName = "Duck")
+};
+
+UENUM(BlueprintType)
+enum class EPlayerKeys : uint8
+{
+	KEY_LEFT UMETA(DisplayName = "Left"),
+	KEY_RIGHT UMETA(DisplayName = "Right"),
+	KEY_DOWN UMETA(DisplayName = "Down"),
+	KEY_UP UMETA(DisplayName = "Up"),
+	KEY_JUMP UMETA(DisplayName = "Jump")
 };
 
 UCLASS()
@@ -42,6 +53,7 @@ public:
 
 	void Move(float AxisValue);
 	void Aim(float AxisValue);
+	void Duck();
 	void Jump() override;
 	void Landed(const FHitResult& Hit) override;
 	void Kill();
@@ -65,6 +77,8 @@ protected:
 		class UPaperFlipbook* JumpAnimation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
 		class UPaperFlipbook* DefeatAnimation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animations)
+		class UPaperFlipbook* DuckAnimation;
 
 	UPROPERTY(BlueprintReadOnly, Category=State)
 		EPlayerStates state;
