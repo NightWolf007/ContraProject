@@ -38,7 +38,7 @@ AContraPlayer::AContraPlayer()
 	JumpAnimation = ConstructorStatics.JumpAnimationAsset.Get();
 	DefeatAnimation = ConstructorStatics.DefeatAnimationAsset.Get();
 
-	state = EPlayerStates::PS_USUAL;
+	ChangeState(EPlayerStates::PS_IDLE);
 	GetSprite()->SetFlipbook(IdleAnimation);
 	GetSprite()->SetRelativeScale3D(FVector(4.5, 1, 4.5));
 
@@ -52,7 +52,6 @@ AContraPlayer::AContraPlayer()
 	GetCapsuleComponent()->SetCapsuleHalfHeight(90);
 	GetCapsuleComponent()->SetCapsuleRadius(68);
 	GetCapsuleComponent()->SetRelativeLocation(FVector(-25, 0, 0));
-
 
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	// PrimaryActorTick.bCanEverTick = true;
@@ -81,37 +80,66 @@ AContraPlayer::AContraPlayer()
 	GetCharacterMovement()->bUseFlatBaseForFloorChecks = true;
 }
 
-// Called every frame
-void AContraPlayer::UpdateAnimation()
+void AContraPlayer::ChangeState(EPlayerStates nstate)
 {
-	FVector velocity = GetVelocity();
+	UPaperFlipbook* flipbook = nullptr;
 
-	if (is_jumping && velocity.Z != 0) {
-		GetSprite()->SetFlipbook(JumpAnimation);
+	switch (nstate) {
+		case EPlayerStates::PS_IDLE :
+			flipbook = IdleAnimation;
+			// GetWorldTimerManager()->SetTimer(standTimerHandle, this, &AContraPlayer::Stand, 3);
+		break;
+
+		case EPlayerStates::PS_STAND :
+			flipbook = StandAnimation;
+		break;
+
+		case EPlayerStates::PS_RUN :
+			flipbook = RunningAnimation;
+		break;
+
+		case EPlayerStates::PS_RUN_AIM_UP :
+			flipbook = AimRunningUpAnimation;
+		break;
+
+		case EPlayerStates::PS_RUN_AIM_DOWN :
+			flipbook = AimRunningDownAnimation;
+		break;
+
+		case EPlayerStates::PS_JUMP :
+			flipbook = JumpAnimation;
+		break;
+
+		case EPlayerStates::PS_LIE :
+		break;
+
+		case EPlayerStates::PS_DEFEAT :
+			flipbook = DefeatAnimation;
+		break;
+	};
+
+	GetSprite()->SetFlipbook(flipbook);
+	state = nstate;
+	// if (EPlayerStates::PS_IDLE != nstate)
+	// 	GetWorldTimerManager()->ClearTimer(standTimerHandle);
+}
+
+void AContraPlayer::RequestState(EPlayerStates nstate)
+{
+	if ((EPlayerStates::PS_RUN_AIM_UP == state || EPlayerStates::PS_RUN_AIM_DOWN == state) &&
+		EPlayerStates::PS_RUN == nstate)
 		return;
-	}
-	if (is_jumping)
-		is_jumping = false;
 
-	if (velocity.X != 0) {
-		if (EPlayerStates::PS_AIMING_UP == state)
-			GetSprite()->SetFlipbook(AimRunningUpAnimation);
-		else if (EPlayerStates::PS_AIMING_DOWN == state)
-			GetSprite()->SetFlipbook(AimRunningDownAnimation);
-		else
-			GetSprite()->SetFlipbook(RunningAnimation);
-	}
-	else
-		GetSprite()->SetFlipbook(IdleAnimation);
+	if (EPlayerStates::PS_JUMP == state || EPlayerStates::PS_DEFEAT == state)
+		return;
+
+	if ((EPlayerStates::PS_RUN_AIM_UP == nstate || EPlayerStates::PS_RUN_AIM_DOWN == nstate) &&
+		EPlayerStates::PS_IDLE == state)
+		return;
+
+	ChangeState(nstate);
 }
 
-void AContraPlayer::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	UpdateAnimation();
-}
-
-// Called to bind functionality to input
 void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {
 	Super::SetupPlayerInputComponent(InputComponent);
@@ -127,25 +155,48 @@ void AContraPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompon
 void AContraPlayer::Move(float AxisValue)
 {
 	AddMovementInput(FVector(1, 0, 0), AxisValue);
-	if(AxisValue != 0)
-		if(AxisValue > 0)
-			GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
-		else
-			GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
+	if (AxisValue == 0) {
+		RequestState(EPlayerStates::PS_IDLE);
+		return;
+	}
+
+	RequestState(EPlayerStates::PS_RUN);
+	if(AxisValue > 0)
+		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
+	else
+		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
 }
 
 void AContraPlayer::Aim(float AxisValue)
 {
-	if (AxisValue == 0)
-		state = EPlayerStates::PS_USUAL;
-	else if (AxisValue > 0)
-		state = EPlayerStates::PS_AIMING_UP;
-	else
-		state = EPlayerStates::PS_AIMING_DOWN;
+	if (AxisValue == 0) {
+		// RequestState(EPlayerStates::PS_RUN);
+		return;
+	}
+	if (AxisValue > 0)
+		RequestState(EPlayerStates::PS_RUN_AIM_UP);
+	else if (AxisValue < 0)
+		RequestState(EPlayerStates::PS_RUN_AIM_DOWN);
 }
 
 void AContraPlayer::Jump()
 {
-	is_jumping = true;
+	RequestState(EPlayerStates::PS_JUMP);
 	Super::Jump();
+}
+
+void AContraPlayer::Landed(const FHitResult& Hit)
+{
+	ChangeState(EPlayerStates::PS_IDLE);
+	Super::Landed(Hit);
+}
+
+void AContraPlayer::Kill()
+{
+	RequestState(EPlayerStates::PS_DEFEAT);
+}
+
+void AContraPlayer::Stand()
+{
+	RequestState(EPlayerStates::PS_STAND);
 }
