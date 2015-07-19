@@ -8,12 +8,16 @@
 UENUM(BlueprintType)
 enum class EPlayerStates : uint8
 {
-	PS_USUAL UMETA(DisplayName="Usual"),
-	// PS_MIDAIR UMETA(DisplayName="MidAir"),
-	PS_DEFEATED UMETA(DisplayName="Defeated"),
-	PS_LYING UMETA(DisplayName="Lying"),
-	PS_AIMING_UP UMETA(DisplayName="AimingUp"),
-	PS_AIMING_DOWN UMETA(DisplayName="AimingUp")
+	PS_IDLE UMETA(DisplayName="Idle"),
+	PS_STAND UMETA(DisplayName="Stand"),
+
+	PS_RUN UMETA(DisplayName="Run"),
+	PS_RUN_AIM_UP UMETA(DisplayName="AimUp"),
+	PS_RUN_AIM_DOWN UMETA(DisplayName="AimDown"),
+
+	PS_JUMP UMETA(DisplayName="Jump"),
+	PS_LIE UMETA(DisplayName="Lying"),
+	PS_DEFEAT UMETA(DisplayName="Defeated")
 };
 
 UCLASS()
@@ -26,16 +30,22 @@ public:
 	AContraPlayer();
 	
 	// Called every frame
-	void UpdateAnimation();
+	// void UpdateAnimation();
 
-	virtual void Tick(float DeltaSeconds) override;
+	// virtual void Tick(float DeltaSeconds) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
+	void ChangeState(EPlayerStates nstate);
+	void RequestState(EPlayerStates nstate);
+
 	void Move(float AxisValue);
 	void Aim(float AxisValue);
 	void Jump() override;
+	void Landed(const FHitResult& Hit) override;
+	void Kill();
+	void Stand();
 	
 protected:
 	UPROPERTY(EditAnywhere)
@@ -59,5 +69,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category=State)
 		EPlayerStates state;
 
-	bool is_jumping = false;
+	// bool is_jumping = false;
+	FTimerHandle standTimerHandle;
 };
