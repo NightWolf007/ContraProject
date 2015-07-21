@@ -93,6 +93,7 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 	switch (nstate) {
 		case EPlayerStates::PS_IDLE :
 			flipbook = IdleAnimation;
+			GetWorldTimerManager().SetTimer(statndTimerHandle, this, &AContraPlayer::Stand, 3.0f, true);
 		break;
 
 		case EPlayerStates::PS_STAND :
