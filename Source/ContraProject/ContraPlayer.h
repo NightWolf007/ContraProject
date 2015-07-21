@@ -10,6 +10,7 @@ enum class EPlayerStates : uint8
 {
 	PS_IDLE UMETA(DisplayName="Idle"),
 	PS_STAND UMETA(DisplayName="Stand"),
+	PS_AIM_UP UMETA(DisplayName = "StandAimUp"),
 
 	PS_RUN UMETA(DisplayName="Run"),
 	PS_RUN_AIM_UP UMETA(DisplayName="AimUp"),
@@ -67,6 +68,8 @@ protected:
 		class UPaperFlipbook* DefeatAnimation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animations)
 		class UPaperFlipbook* DuckAnimation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animations)
+		class UPaperFlipbook* AimUpAnimation;
 
 	UPROPERTY(BlueprintReadOnly, Category=State)
 		EPlayerStates state;

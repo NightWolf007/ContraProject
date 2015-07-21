@@ -11,6 +11,7 @@ AContraPlayer::AContraPlayer()
 	struct FConstructorStatics
 	{
 		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> RunningAnimationAsset;
+		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> AimUpAnimationAsset;
 		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> AimRunningUpAnimationAsset;
 		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> AimRunningDownAnimationAsset;
 		ConstructorHelpers::FObjectFinderOptional<UPaperFlipbook> IdleAnimationAsset;
@@ -21,6 +22,7 @@ AContraPlayer::AContraPlayer()
 		FConstructorStatics()
 			: RunningAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Running.Running")),
 			AimRunningUpAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/AimRunningUp.AimRunningUp")),
+			AimUpAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/AimUp.AimUp")),
 			AimRunningDownAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/AimRunningDown.AimRunningDown")),
 			IdleAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Idle.Idle")),
 			StandAnimationAsset(TEXT("/Game/2dSideScroller/Animation/Ray/Stand.Stand")),
@@ -33,6 +35,7 @@ AContraPlayer::AContraPlayer()
 	static FConstructorStatics ConstructorStatics;
 
 	RunningAnimation = ConstructorStatics.RunningAnimationAsset.Get();
+	AimUpAnimation = ConstructorStatics.AimUpAnimationAsset.Get();
 	AimRunningUpAnimation = ConstructorStatics.AimRunningUpAnimationAsset.Get();
 	AimRunningDownAnimation = ConstructorStatics.AimRunningDownAnimationAsset.Get();
 	IdleAnimation = ConstructorStatics.IdleAnimationAsset.Get();
@@ -93,7 +96,6 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 	switch (nstate) {
 		case EPlayerStates::PS_IDLE :
 			flipbook = IdleAnimation;
-			GetWorldTimerManager().SetTimer(statndTimerHandle, this, &AContraPlayer::Stand, 3.0f, true);
 		break;
 
 		case EPlayerStates::PS_STAND :
@@ -103,6 +105,10 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 		case EPlayerStates::PS_RUN :
 			flipbook = RunningAnimation;
 		break;
+
+		case EPlayerStates::PS_AIM_UP:
+			flipbook = AimUpAnimation;
+			break;
 
 		case EPlayerStates::PS_RUN_AIM_UP :
 			flipbook = AimRunningUpAnimation;
@@ -132,6 +138,8 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 	GetCapsuleComponent()->SetCapsuleRadius(HitBoxRadius);
 	GetSprite()->SetFlipbook(flipbook);
 	state = nstate;
+	// if (EPlayerStates::PS_IDLE != nstate)
+	// 	GetWorldTimerManager()->ClearTimer(standTimerHandle);
 }
 
 void AContraPlayer::UpdateState()
@@ -155,7 +163,7 @@ void AContraPlayer::UpdateState()
 			nstate = EPlayerStates::PS_RUN;
 	else
 		if (yVal > 0)
-			nstate = EPlayerStates::PS_IDLE;
+			nstate = EPlayerStates::PS_AIM_UP;
 		else if (yVal < 0)
 			nstate = EPlayerStates::PS_DUCK;
 		else
@@ -184,7 +192,7 @@ void AContraPlayer::Move(float AxisValue)
 	AddMovementInput(FVector(1, 0, 0), AxisValue);
 	if(AxisValue > 0)
 		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 0, 0)));
-	else
+	else if (AxisValue < 0)
 		GetSprite()->SetRelativeRotation(FQuat(FRotator(0, 180, 0)));
 }
 
