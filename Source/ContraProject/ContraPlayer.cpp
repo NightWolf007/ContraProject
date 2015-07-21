@@ -131,8 +131,6 @@ void AContraPlayer::ChangeState(EPlayerStates nstate)
 	GetCapsuleComponent()->SetCapsuleRadius(HitBoxRadius);
 	GetSprite()->SetFlipbook(flipbook);
 	state = nstate;
-	// if (EPlayerStates::PS_IDLE != nstate)
-	// 	GetWorldTimerManager()->ClearTimer(standTimerHandle);
 }
 
 void AContraPlayer::UpdateState()
